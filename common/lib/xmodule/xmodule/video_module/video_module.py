@@ -424,7 +424,6 @@ class VideoModule(VideoFields, XModule):
 
         if dispatch.startswith('translation'):
             language = dispatch.replace('translation', '').strip('/')
-
             if request.method == 'DELETE':  # We will clear field on front-end on save. So we remove files here:
                 if language:
                     Transcript.delete_asset(self.location, self.transcripts[language])
