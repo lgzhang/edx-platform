@@ -657,16 +657,16 @@ course_id
 ----
 key
 ----
-  Identifies an attribute of the course that can be set for a student. 
+  Identifies an attribute of the course. 
 
-  For example, for a course that divides students into different groups, the value in this columnn is ``partition_{partition ID}``.
+  For example, for a course that includes modules that are set up to perform A/B testing, the value in this column identifies a partition, or type of experiment. The key for the partition is in the format ``xblock.partition_service.partition_ID``, where ID is an integer.
 
 ------
 value
 ------
-  The content for the key. 
+  The content for the key that is set for a student. 
 
-  For example, for a course that divides students into different groups, this column stores the group ID of the particular group the student is assigned to in the partition.
+  For example, for a course that includes modules that are set up to perform A/B testing, this column stores the group ID of the particular group the student is assigned to within the partition.
 
 .. _user_id_map:
 

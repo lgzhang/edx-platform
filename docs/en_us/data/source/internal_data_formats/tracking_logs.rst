@@ -148,8 +148,8 @@ This section contains a table of the JSON fields that are common to the schema d
 |                           | the event, the organization that lists the course, and the  |             | fields:                            |  
 |                           | individual who is performing the action.                    |             | ``course_id``                      |
 |                           |                                                             |             | ``org_id``                         |
-|                           | ``course_user_tags`` contains a dictionary with the keys    |             | ``user_id``                        |
-|                           |  and values from the  ``user_api_usercoursetag`` table      |             | ``course_user_tags``               |    
+|                           | ``course_user_tags`` contains a dictionary with the key(s)  |             | ``user_id``                        |
+|                           |  and value(s) from the ``user_api_usercoursetag`` table     |             | ``course_user_tags``               |    
 |                           |  for the user. See :ref:`user_api_usercoursetag`.           |             |                                    | 
 |                           |                                                             |             | These fields are blank if values   |
 |                           | Also contains member fields that apply to specific event    |             | cannot be determined.              |
@@ -165,7 +165,7 @@ This section contains a table of the JSON fields that are common to the schema d
 |                           | browser or on the server.                                   |             |                                    |
 +---------------------------+-------------------------------------------------------------+-------------+------------------------------------+
 | ``event_type``            | The type of event triggered. Values depend on               | string      | For descriptions of member fields, |
-|                           | ``event_source``                                            |             | see the event type descriptions    |
+|                           | ``event_source``.                                           |             | see the event type descriptions    |
 |                           |                                                             |             | that follow.                       |
 +---------------------------+-------------------------------------------------------------+-------------+------------------------------------+
 | ``ip``                    | IP address of the user who triggered the event.             | string      |                                    |
@@ -833,14 +833,12 @@ The ``staff_grading_hide_question`` and ``staff_grading_show_question`` event ty
 A/B Testing Event Types
 ==========================
 
-Course authors can configure course content to present modules contain other modules. For example, a parent module can include two child modules with content that differs in some way for comparison testing. When a student navigates to a module that is set up for A/B testing, the student is randomly assigned to a group and shown only one of the child modules. 
+Course authors can configure course content to present modules that contain other modules. For example, a parent module can include two child modules with content that differs in some way for comparison testing. When a student navigates to a module that is set up for A/B testing in this way, the student is randomly assigned to a group and shown only one of the child modules. 
 
-.. what identifies a module as being an A/B test parent module, and triggers the partition/group assignment?
-.. why are two layers of categorization, into both partitions and groups, needed?
+* Internally, a *partition* defines the type of experiment: between video and text, for example. A course can include any number of modules with the same partition, or experiment type.
+* For each partition, students are randomly assigned to a *group*. The group determines which content, either video or text in this example, is shown by every module with that partitioning. 
 
-These event types apply to modules that are set up to randomly assign students to groups so that modules with different content can be shown to the different groups. 
-
-.. note:: The common ``context`` field includes a ``course_user_tags`` field to identify the student's assigned partition and group.
+The event types that follow apply to modules that are set up to randomly assign students to groups so that different content can be shown to the different groups. 
 
 **History**: These event types were added on 12 Mar 2014.
 
@@ -848,11 +846,9 @@ These event types apply to modules that are set up to randomly assign students t
 ``assigned_user_to_partition``
 ----------------------------------
 
-When a student views a module that is set up to test the different child modules that it contains, the server checks for the student's assignment to a partition and group. If the student does not yet have a testing assignment, the server fires an ``assigned_user_to_partition`` event and adds a row to the ``user_api_usercoursetag`` table for the student. See :ref:`user_api_usercoursetag`. 
+When a student views a module that is set up to test different child modules, the server checks the ``user_api_usercoursetag`` table for the student's assignment to the relevant partition, and to a group for that partition. If the student does not yet have an assignment, the server fires an ``assigned_user_to_partition`` event and adds a row to the ``user_api_usercoursetag`` table for the student. See :ref:`user_api_usercoursetag`. 
 
-A/B testing uses the partition service, which generates keys like ``xblock.partition_service.partition_$ID``, where ``$ID`` is the actual id of the group that the user was assigned to (this will just be an integer, with the metadata about the group stored on the course object).
-
-.. quoting Cale without understanding how to integrate this information better
+.. note:: After this event fires, the common ``context`` field in all subsequent events includes a ``course_user_tags`` member field with the student's assigned partition and group.
 
 **Component**: Split Test
 
@@ -867,7 +863,8 @@ A/B testing uses the partition service, which generates keys like ``xblock.parti
 +---------------------+---------------+---------------------------------------------------------------------+
 | ``group_name``      | string        | Name of the group.                                                  |
 +---------------------+---------------+---------------------------------------------------------------------+
-| ``partition_id``    | integer       | Identifier for the partition.                                       |
+| ``partition_id``    | integer       | Identifier for the partition, in the format                         |
+|                     |               | ``xblock.partition_service.partition_ID`` where ID is an integer.   |
 +---------------------+---------------+---------------------------------------------------------------------+
 | ``partition_name``  | string        | Name of the partition.                                              |
 +---------------------+---------------+---------------------------------------------------------------------+
