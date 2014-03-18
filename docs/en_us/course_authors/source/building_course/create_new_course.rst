@@ -434,22 +434,12 @@ To delete a file, click the **x** icon next to the file.  You are prompted to co
 
 .. warning:: If you have links to a file you delete, those links will be broken. Ensure you change those links before deleting the file.
  
-<<<<<<< HEAD:docs/en_us/course_authors/source/building_course/create_new_course.rst
-.. _Add Static Pages:
-=======
+
 .. _`Add Pages`:
->>>>>>> Initial draft for static page changes:docs/en_us/course_authors/source/create_new_course.rst
 
 ****************
 Add Pages
 ****************
-<<<<<<< HEAD:docs/en_us/course_authors/source/building_course/create_new_course.rst
-<<<<<<< HEAD:docs/en_us/course_authors/source/building_course/create_new_course.rst
-You can add static pages to your course. Each static page appears in your course's navigation bar. 
-=======
-You can add pages to your course. Each page appears in your course's' navigation bar. 
-=======
->>>>>>> Edits from review:docs/en_us/course_authors/source/create_new_course.rst
 
 By default, your course has the following pages:
 
@@ -463,10 +453,10 @@ You cannot rename, reorder, or remove these pages.
 
 You can add pages to your course. Each page appears in your course's navigation bar. 
 
-For example, the following navigation bar includes
+For example, the following navigation bar includes the default pages as well as the
 **Course Schedule** and **Supplements & Instructor's Blog** pages.
 
-.. image:: Images/page_bar_lms.png
+.. image:: ../Images/page_bar_lms.png
  :alt: Image of the page bar in the LMS
 
 You can create other pages for the grading policy, course slides, or any other purpose. More examples of pages you can add are:
@@ -481,18 +471,18 @@ To create a page:
 
 #. From the **Content** menu, select **Pages**. 
 
-  .. image:: Images/pages_page.png
+  .. image:: ../Images/pages_page.png
    :alt: Image of the Pages screen
 
 
 2. Click **Add a New Page**. A page with the title **Empty** is added to the list:
 
-  .. image:: Images/pages_empty.png
+  .. image:: ../Images/pages_empty.png
    :alt: Image of the Pages screen with a new Empty page
 
 3. Click **Edit**. The HTML editor opens.  
 
-  .. image:: Images/pages_editor.png
+  .. image:: ../Images/pages_editor.png
    :alt: Image of the Page editor
 
 4. Enter text for your page. See :ref:`The User Interface` for more information about using the editor.
