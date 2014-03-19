@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 """Video xmodule tests in mongo."""
-from mock import patch, PropertyMock
+import unittest
+from mock import patch, PropertyMock, MagicMock
+
+from django.conf import settings
+
+from xblock.fields import ScopeIds
+from xblock.field_data import DictFieldData
+
+from xmodule.video_module import create_youtube_string
+from xmodule.tests import get_test_descriptor_system
+from xmodule.modulestore import Location
+from xmodule.video_module import VideoDescriptor
 
 from . import BaseTestXmodule
 from .test_video_xml import SOURCE_XML
 from .test_video_handlers import TestVideo
-from django.conf import settings
-from xmodule.video_module import create_youtube_string
 
 
 class TestVideoYouTube(TestVideo):
@@ -477,3 +486,37 @@ class TestVideoDescriptorInitialization(BaseTestXmodule):
 
         self.assertNotIn('source', fields)
         self.assertFalse(self.item_descriptor.download_video)
+
+
+class VideoDescriptorTest(unittest.TestCase):
+
+    def setUp(self):
+        system = get_test_descriptor_system()
+        location = Location('i4x://org/course/video/name')
+        self.descriptor = system.construct_xblock_from_class(
+            VideoDescriptor,
+            scope_ids=ScopeIds(None, None, location, location),
+            field_data=DictFieldData({}),
+        )
+        self.descriptor.runtime.handler_url = MagicMock()
+
+    def test_get_context(self):
+        """"
+        Test get_context.
+
+        This test is located here and not in xmodule.tests because get_context calls editable_metadata_fields.
+        Which, in turn, uses settings.LANGUAGES from django setttings.
+        """
+        correct_tabs = [
+            {
+                'name': "Basic",
+                'template': "video/transcripts.html",
+                'current': True
+            },
+            {
+                'name': 'Advanced',
+                'template': 'tabs/metadata-edit-tab.html'
+            }
+        ]
+        rendered_context = self.descriptor.get_context()
+        self.assertListEqual(rendered_context['tabs'], correct_tabs)
