@@ -404,76 +404,82 @@ class TestVideoDescriptorInitialization(BaseTestXmodule):
         self.assertTrue(self.item_descriptor.download_video)
         self.assertFalse(self.item_descriptor.source_visible)
 
-    @patch('xmodule.video_module.VideoDescriptor.editable_metadata_fields', new_callable=PropertyMock)
-    def test_download_video_is_explicitly_set(self, mock_editable_fields):
-        mock_editable_fields.return_value = {
-            'download_video': {
-                'default_value': False,
-                'explicitly_set': True,
-                'display_name': 'Video Download Allowed',
-                'help': 'Show a link beneath the video to allow students to download the video.',
-                'type': 'Boolean',
-                'value': False,
-                'field_name': 'download_video',
-                'options': [
-                    {'display_name': "True", "value": True},
-                    {'display_name': "False", "value": False}
-                ],
-            },
-            'html5_sources': {
-                'default_value': [],
-                'explicitly_set': False,
-                'display_name': 'Video Sources',
-                'help': 'A list of filenames to be used with HTML5 video.',
-                'type': 'List',
-                'value': [u'http://youtu.be/OEoXaMPEzfM.mp4'],
-                'field_name': 'html5_sources',
-                'options': [],
-            },
-            'source': {
-                'default_value': '',
-                'explicitly_set': False,
-                'display_name': 'Download Video',
-                'help': 'The external URL to download the video.',
-                'type': 'Generic',
-                'value': u'http://example.org/video.mp4',
-                'field_name': 'source',
-                'options': [],
-            },
-            'track': {
-                'default_value': '',
-                'explicitly_set': False,
-                'display_name': 'Download Transcript',
-                'help': 'The external URL to download the timed transcript track.',
-                'type': 'Generic',
-                'value': u'http://some_track.srt',
-                'field_name': 'track',
-                'options': [],
-            },
-            'download_track': {
-                'default_value': False,
-                'explicitly_set': False,
-                'display_name': 'Transcript Download Allowed',
-                'help': 'Show a link beneath the video to allow students to download the transcript. Note: You must add a link to the HTML5 Transcript field above.',
-                'type': 'Generic',
-                'value': False,
-                'field_name': 'download_track',
-                'options': [],
+
+    def test_download_video_is_explicitly_set(self):
+        with patch(
+            'xmodule.editing_module.TabsEditingDescriptor.editable_metadata_fields',
+            new_callable=PropertyMock,
+            return_value={
+                'download_video': {
+                    'default_value': False,
+                    'explicitly_set': True,
+                    'display_name': 'Video Download Allowed',
+                    'help': 'Show a link beneath the video to allow students to download the video.',
+                    'type': 'Boolean',
+                    'value': False,
+                    'field_name': 'download_video',
+                    'options': [
+                        {'display_name': "True", "value": True},
+                        {'display_name': "False", "value": False}
+                    ],
+                },
+                'html5_sources': {
+                    'default_value': [],
+                    'explicitly_set': False,
+                    'display_name': 'Video Sources',
+                    'help': 'A list of filenames to be used with HTML5 video.',
+                    'type': 'List',
+                    'value': [u'http://youtu.be/OEoXaMPEzfM.mp4'],
+                    'field_name': 'html5_sources',
+                    'options': [],
+                },
+                'source': {
+                    'default_value': '',
+                    'explicitly_set': False,
+                    'display_name': 'Download Video',
+                    'help': 'The external URL to download the video.',
+                    'type': 'Generic',
+                    'value': u'http://example.org/video.mp4',
+                    'field_name': 'source',
+                    'options': [],
+                },
+                'track': {
+                    'default_value': '',
+                    'explicitly_set': False,
+                    'display_name': 'Download Transcript',
+                    'help': 'The external URL to download the timed transcript track.',
+                    'type': 'Generic',
+                    'value': u'http://some_track.srt',
+                    'field_name': 'track',
+                    'options': [],
+                },
+                'download_track': {
+                    'default_value': False,
+                    'explicitly_set': False,
+                    'display_name': 'Transcript Download Allowed',
+                    'help': 'Show a link beneath the video to allow students to download the transcript. Note: You must add a link to the HTML5 Transcript field above.',
+                    'type': 'Generic',
+                    'value': False,
+                    'field_name': 'download_track',
+                    'options': [],
+                },
+                'transcripts': {},
             }
-        }
-        metadata = {
-            'track': u'http://some_track.srt',
-            'source': 'http://example.org/video.mp4',
-            'html5_sources': ['http://youtu.be/OEoXaMPEzfM.mp4'],
-        }
+        ):
+            metadata = {
+                'track': u'http://some_track.srt',
+                'source': 'http://example.org/video.mp4',
+                'html5_sources': ['http://youtu.be/OEoXaMPEzfM.mp4'],
+            }
 
-        self.initialize_module(metadata=metadata)
-        fields = self.item_descriptor.editable_metadata_fields
+            self.initialize_module(metadata=metadata)
 
-        self.assertIn('source', fields)
-        self.assertFalse(self.item_descriptor.download_video)
-        self.assertTrue(self.item_descriptor.source_visible)
-        self.assertTrue(self.item_descriptor.download_track)
+            fields = self.item_descriptor.editable_metadata_fields
+            self.assertIn('source', fields)
+
+            self.assertFalse(self.item_descriptor.download_video)
+            self.assertTrue(self.item_descriptor.source_visible)
+            self.assertTrue(self.item_descriptor.download_track)
 
     def test_source_is_empty(self):
         metadata = {
