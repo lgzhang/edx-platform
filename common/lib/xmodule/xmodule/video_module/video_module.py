@@ -641,12 +641,10 @@ class VideoDescriptor(VideoFields, TabsEditingDescriptor, EmptyDataRawDescriptor
     def editable_metadata_fields(self):
         editable_fields = super(VideoDescriptor, self).editable_metadata_fields
 
-        # TODO Anton - we need this code in __init__ ??
-        if hasattr(self, 'source_visible'):
-            if self.source_visible:
-                editable_fields['source']['non_editable'] = True
-            else:
-                editable_fields.pop('source')
+        if self.source_visible:
+            editable_fields['source']['non_editable'] = True
+        else:
+            editable_fields.pop('source')
 
         languages = [{'label': label, 'code': lang} for lang, label in settings.ALL_LANGUAGES if lang != u'en']
         languages.sort(key=lambda l: l['label'])
