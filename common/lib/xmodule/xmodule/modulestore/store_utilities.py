@@ -1,6 +1,7 @@
 import re
 from xmodule.contentstore.content import StaticContent
 from xmodule.modulestore import Location
+from xmodule.modulestore.django import loc_mapper
 
 import logging
 
@@ -265,5 +266,17 @@ def delete_course(modulestore, contentstore, source_location, commit=False):
     print "Deleting {0}...".format(source_location)
     if commit:
         modulestore.delete_item(source_location)
+
+        # remove location of this course from loc_mapper and cache
+        course_locator = loc_mapper().translate_location(source_location.course_id, source_location)
+        course_locator_draft = loc_mapper().translate_location(
+            source_location.course_id, source_location, published=False
+        )
+
+        loc_mapper().location_map.remove({'course_id': course_locator.package_id})
+        # pylint: disable=protected-access
+        loc_mapper()._delete_course_cache_location_map_entry(
+            source_location.course_id, source_location, course_locator, course_locator_draft
+        )
 
     return True

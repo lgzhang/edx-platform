@@ -500,3 +500,18 @@ class LocMapperStore(object):
         setmany[u'{}+{}'.format(old_course_id, location.url())] = (published_usage, draft_usage)
         setmany[old_course_id] = (published_usage, draft_usage)
         self.cache.set_many(setmany)
+
+    def _delete_course_cache_location_map_entry(self, old_course_id, location, published_usage, draft_usage):
+        """
+        Remove the location of course (draft and published) from cache
+        """
+        delete_keys = []
+        if location.category == 'course':
+            delete_keys.append(u'courseId+{}'.format(published_usage.package_id))
+            delete_keys.append(u'courseIdLower+{}'.format(published_usage.package_id.lower()))
+
+        delete_keys.append(unicode(published_usage))
+        delete_keys.append(unicode(draft_usage))
+        delete_keys.append(u'{}+{}'.format(old_course_id, location.url()))
+        delete_keys.append(old_course_id)
+        self.cache.delete_many(delete_keys)
