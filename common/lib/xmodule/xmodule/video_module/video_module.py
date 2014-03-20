@@ -369,9 +369,7 @@ class VideoModule(VideoFields, XModule):
             log.debug('no subtitles produced in get_transcript')
             raise ValueError
 
-        mime_type = 'text/plain' if transcript_format == 'txt' else 'application/x-subrip'
-
-        return content, filename, mime_type
+        return content, filename, Transcript.mime_types[transcript_format]
 
 
     @XBlock.handler
@@ -466,8 +464,11 @@ class VideoModule(VideoFields, XModule):
                     log.info(ex.message)
                     response = Response(status=404)
                 else:
+                    transcript_format = 'sjson' if not request.GET.get('format') else request.GET.get('format')
+                    if request.GET.get('format'):
+                        transcript = Transcript.convert(transcript, 'sjson', request.GET.get('format'))
                     response = Response(transcript, headerlist=[('Content-Language', language)])
-                    response.content_type = 'application/json'
+                    response.content_type = Transcipt.mime_types[transcript_format]
 
         elif dispatch == 'download':
             try:
