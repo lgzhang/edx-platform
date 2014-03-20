@@ -2,6 +2,10 @@
 Implement CourseTab
 """
 # pylint: disable=incomplete-protocol
+# Note: pylint complains that we do not implement __delitem__ and __len__, although we implement __setitem__
+# and __getitem__.  However, the former two do not apply to the CourseTab class so we do not implement them.
+# The reason we implement the latter two is to enable callers to continue to use the CourseTab object with
+# dict-type accessors.
 
 from abc import ABCMeta, abstractmethod
 from xblock.fields import List
@@ -112,12 +116,6 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         else:
             raise KeyError('Key {0} cannot be set in tab {1}'.format(key, self.to_json()))
 
-    # pylint: disable=incomplete-protocol
-    # Note: pylint complains that we do not implement __delitem__ and __len__, although we implement __setitem__
-    # and __getitem__.  However, the former two do not apply to this class so we do not implement them.  The
-    # reason we implement the latter two is to enable callers to continue to use the CourseTab object with dict-type
-    # accessors.
-
     def to_json(self):
         """
         Serializes the necessary members of the CourseTab object.
@@ -146,7 +144,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         """
         Overrides the not equal operator as a partner to the equal operator.
         """
-        return not self == other
+        return not (self == other)
 
     @classmethod
     def validate(cls, tab, raise_error=True):  # pylint: disable=unused-argument
@@ -255,6 +253,7 @@ class ProgressTab(AuthenticatedCourseTab):
 
     def __init__(self, tab=None):
         super(ProgressTab, self).__init__(
+            # Translators: "Progress" is the name of the student's course progress page
             name=tab['name'] if tab else _('Progress'),
             tab_id=self.type,
             link_func=link_reverse_func(self.type),
@@ -280,6 +279,7 @@ class WikiTab(CourseTab):
         # self.is_hideable = True
 
         super(WikiTab, self).__init__(
+            # Translators: "Wiki" is the name of the course's wiki page
             name=tab['name'] if tab else _('Wiki'),
             tab_id=self.type,
             link_func=link_reverse_func('course_wiki'),
@@ -343,7 +343,9 @@ class LinkTab(CourseTab):
             super(LinkTab, self).__setitem__(key, value)
 
     def to_json(self):
-        return {'type': self.type, 'name': self.name, 'link': self.link_value}
+        to_json_val = super(LinkTab, self).to_json()
+        to_json_val.update({'link': self.link_value})
+        return to_json_val
 
     def __eq__(self, other):
         if not super(LinkTab, self).__eq__(other):
@@ -418,7 +420,9 @@ class StaticTab(CourseTab):
             super(StaticTab, self).__setitem__(key, value)
 
     def to_json(self):
-        return {'type': self.type, 'name': self.name, 'url_slug': self.url_slug}
+        to_json_val = super(StaticTab, self).to_json()
+        to_json_val.update({'url_slug': self.url_slug})
+        return to_json_val
 
     def __eq__(self, other):
         if not super(StaticTab, self).__eq__(other):
@@ -741,7 +745,7 @@ class CourseTabList(List):
             raise InvalidTabsException(
                 "Tab of type '{0}' appears {1} time(s). Expected maximum of {2} time(s).".format(
                 tab_type, count, max_num
-            ))
+                ))
 
     def to_json(self, values):
         """

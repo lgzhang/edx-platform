@@ -56,6 +56,11 @@ class TabTestCase(unittest.TestCase):
         # check get and set methods
         self.check_get_and_set_methods(tab)
 
+        # check to_json and from_json methods
+        serialized_tab = tab.to_json()
+        deserialized_tab = tab_class.from_dict(serialized_tab)
+        self.assertEquals(serialized_tab, deserialized_tab)
+
         # check equality methods
         self.assertEquals(tab, dict_tab)  # test __eq__
         ne_dict_tab = dict_tab

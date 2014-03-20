@@ -39,7 +39,7 @@ def see_default_built_in_pages(step):
     pages = world.css_find("div.course-nav-tab-header h3.title")
     assert_equal(len(expected_pages), len(pages))
     for i, page_name in enumerate(expected_pages):
-        assert_true(pages[i].text == page_name)
+        assert_equal(pages[i].text, page_name)
 
 
 @step(u'I "(edit|delete)" the static page$')
