@@ -37,7 +37,6 @@ from .video_xfields import *
 from .video_handlers import VideoStudentViewHandlers, VideoStudioViewHandlers
 
 
-
 log = logging.getLogger(__name__)
 
 
