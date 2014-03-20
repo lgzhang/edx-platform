@@ -4,7 +4,9 @@ Handlers for video module.
 StudentViewHandlers are handlers for video module instance.
 StudioViewHandlers are handlers for video descriptor instance.
 """
+import os
 import json
+import logging
 from webob import Response
 
 from xblock.core import XBlock
@@ -21,6 +23,7 @@ from .transcripts_utils import (
     Transcript,
     save_to_store,
 )
+
 
 log = logging.getLogger(__name__)
 
@@ -322,7 +325,7 @@ class VideoStudioViewHandlers(object):
 
             elif request.method == 'GET':
                 if language not in self.transcripts:
-                    raise TranscriptException('Requested language does not exist (probably Upload failure.')
+                    raise TranscriptException('Requested language does not exist (probably Upload failure.)')
 
                 content = Transcript.get_asset(self.location, self.transcripts[language]).data
                 response = Response(content, headerlist=[
