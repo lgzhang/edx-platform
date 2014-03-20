@@ -60,7 +60,8 @@ class TabTestCase(unittest.TestCase):
         self.assertEquals(tab, dict_tab)  # test __eq__
         ne_dict_tab = dict_tab
         ne_dict_tab['type'] = 'fake_type'
-        self.assertNotEquals(tab, ne_dict_tab)  # test __ne__
+        self.assertNotEquals(tab, ne_dict_tab)  # test __ne__: incorrect type
+        self.assertNotEquals(tab, {'fake_key': 'fake_value'})  # test __ne__: missing type
 
         # return tab for any additional tests
         return tab
@@ -212,18 +213,24 @@ class TextbooksTestCase(TabTestCase):
             tabs.PDFTextbookTabs(),
             tabs.HtmlTextbookTabs(),
         ]
+        self.num_textbook_tabs = sum(1 for tab in self.course.tabs if isinstance(tab, tabs.TextbookTabsBase))
+        self.num_textbooks = self.num_textbook_tabs * len(books)
 
     def test_textbooks_enabled(self):
 
         type_to_reverse_name = {'textbook': 'book', 'pdftextbook': 'pdf_book', 'htmltextbook': 'html_book'}
 
         self.settings.FEATURES['ENABLE_TEXTBOOK'] = True
+        num_textbooks_found = 0
         for tab in tabs.CourseTabList.iterate_displayable(self.course, self.settings):
+            # verify all textbook type tabs
             if isinstance(tab, tabs.SingleTextbookTab):
                 book_type, book_index = tab.tab_id.split("/", 1)
                 expected_link = self.reverse(type_to_reverse_name[book_type], args=[self.course.id, book_index])
                 self.assertEqual(tab.link_func(self.course, self.reverse), expected_link)
                 self.assertTrue(tab.name.startswith('Book{0}:'.format(1 + int(book_index))))
+                num_textbooks_found = num_textbooks_found + 1
+        self.assertEquals(num_textbooks_found, self.num_textbooks)
 
     def test_textbooks_disabled(self):
 
@@ -348,7 +355,7 @@ class KeyCheckerTestCase(unittest.TestCase):
         self.assertTrue(tabs.key_checker(self.valid_keys)(self.dict_value, raise_error=False))
         self.assertFalse(tabs.key_checker(self.invalid_keys)(self.dict_value, raise_error=False))
         with self.assertRaises(tabs.InvalidTabsException):
-            tabs.key_checker(self.invalid_keys)(self.dict_value, raise_error=True)
+            tabs.key_checker(self.invalid_keys)(self.dict_value)
 
 
 class NeedNameTestCase(unittest.TestCase):
@@ -379,11 +386,11 @@ class ValidateTabsTestCase(unittest.TestCase):
             # less than 2 tabs
             [{'type': tabs.CoursewareTab.type}],
             # missing course_info
-            [{'type': tabs.CoursewareTab.type}, {'type': tabs.DiscussionTab.type}],
+            [{'type': tabs.CoursewareTab.type}, {'type': tabs.DiscussionTab.type, 'name': 'fake_name'}],
             # incorrect order
-            [{'type': tabs.CourseInfoTab.type}, {'type': tabs.CoursewareTab.type}],
+            [{'type': tabs.CourseInfoTab.type, 'name': 'fake_name'}, {'type': tabs.CoursewareTab.type}],
             # invalid type
-            [{'type': tabs.CoursewareTab.type}, {'type': tabs.CourseInfoTab.type}, {'type': 'fake_type'}],
+            [{'type': tabs.CoursewareTab.type}, {'type': tabs.CourseInfoTab.type, 'name': 'fake_name'}, {'type': 'fake_type'}],
         ]
 
         # tab types that should appear only once
@@ -398,8 +405,8 @@ class ValidateTabsTestCase(unittest.TestCase):
 
         for unique_tab_type in unique_tab_types:
             self.invalid_tabs.append([
-                {'type': tabs.CourseInfoTab.type},
                 {'type': tabs.CoursewareTab.type},
+                {'type': tabs.CourseInfoTab.type, 'name': 'fake_name'},
                 # add the unique tab multiple times
                 {'type': unique_tab_type},
                 {'type': unique_tab_type},
@@ -412,26 +419,26 @@ class ValidateTabsTestCase(unittest.TestCase):
             # all valid tabs
             [
                 {'type': tabs.CoursewareTab.type},
-                {'type': tabs.CourseInfoTab.type, 'name': 'alice'},
-                {'type': tabs.WikiTab.type, 'name': 'alice'},
-                {'type': tabs.DiscussionTab.type, 'name': 'alice'},
-                {'type': tabs.ExternalLinkTab.type, 'name': 'alice', 'link': 'blink'},
+                {'type': tabs.CourseInfoTab.type, 'name': 'fake_name'},
+                {'type': tabs.WikiTab.type, 'name': 'fake_name'},
+                {'type': tabs.DiscussionTab.type, 'name': 'fake_name'},
+                {'type': tabs.ExternalLinkTab.type, 'name': 'fake_name', 'link': 'fake_link'},
                 {'type': tabs.TextbookTabs.type},
                 {'type': tabs.PDFTextbookTabs.type},
                 {'type': tabs.HtmlTextbookTabs.type},
-                {'type': tabs.ProgressTab.type, 'name': 'alice'},
-                {'type': tabs.StaticTab.type, 'name': 'alice', 'url_slug': 'schlug'},
+                {'type': tabs.ProgressTab.type, 'name': 'fake_name'},
+                {'type': tabs.StaticTab.type, 'name': 'fake_name', 'url_slug': 'schlug'},
                 {'type': tabs.PeerGradingTab.type},
                 {'type': tabs.StaffGradingTab.type},
                 {'type': tabs.OpenEndedGradingTab.type},
-                {'type': tabs.NotesTab.type, 'name': 'alice'},
+                {'type': tabs.NotesTab.type, 'name': 'fake_name'},
                 {'type': tabs.SyllabusTab.type},
             ],
             # with external discussion
             [
                 {'type': tabs.CoursewareTab.type},
-                {'type': tabs.CourseInfoTab.type, 'name': 'alice'},
-                {'type': tabs.ExternalDiscussionTab.type, 'name': 'alice', 'link': 'blink'}
+                {'type': tabs.CourseInfoTab.type, 'name': 'fake_name'},
+                {'type': tabs.ExternalDiscussionTab.type, 'name': 'fake_name', 'link': 'fake_link'}
             ],
         ]
 
@@ -446,12 +453,36 @@ class ValidateTabsTestCase(unittest.TestCase):
             self.assertEquals(len(from_json_result), len(valid_tab_list))
 
 
-class IterateDisplayableTestCase(TabTestCase):
+class CourseTabListTestCase(TabTestCase):
     """Testing the generator method for iterating through displayable tabs"""
 
-    def setUp(self):
-        super(IterateDisplayableTestCase, self).setUp()
+    def test_initialize_default_without_syllabus(self):
+        self.course.tabs = []
+        self.course.syllabus_present = False
+        tabs.CourseTabList.initialize_default(self.course)
+        self.assertTrue(tabs.SyllabusTab() not in self.course.tabs)
 
+    def test_initialize_default_with_syllabus(self):
+        self.course.tabs = []
+        self.course.syllabus_present = True
+        tabs.CourseTabList.initialize_default(self.course)
+        self.assertTrue(tabs.SyllabusTab() in self.course.tabs)
+
+    def test_initialize_default_with_external_link(self):
+        self.course.tabs = []
+        self.course.discussion_link = "other_discussion_link"
+        tabs.CourseTabList.initialize_default(self.course)
+        self.assertTrue(tabs.ExternalDiscussionTab(link_value="other_discussion_link") in self.course.tabs)
+        self.assertTrue(tabs.DiscussionTab() not in self.course.tabs)
+
+    def test_initialize_default_without_external_link(self):
+        self.course.tabs = []
+        self.course.discussion_link = ""
+        tabs.CourseTabList.initialize_default(self.course)
+        self.assertTrue(tabs.ExternalDiscussionTab() not in self.course.tabs)
+        self.assertTrue(tabs.DiscussionTab() in self.course.tabs)
+
+    def test_iterate_displayable(self):
         self.settings.FEATURES['ENABLE_TEXTBOOK'] = True
         self.course.tabs = [
             tabs.CoursewareTab(),
@@ -459,7 +490,6 @@ class IterateDisplayableTestCase(TabTestCase):
             tabs.WikiTab(),
         ]
 
-    def test_iterate_displayable(self):
         for i, tab in enumerate(tabs.CourseTabList.iterate_displayable(
             self.course,
             self.settings,

@@ -28,13 +28,14 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         """
         Initializes class members with values passed in by subclasses.
 
-        'name' is the name of the tab
+        Args:
+            name: The name of the tab
 
-        'tab_id' is intended to be a unique id for this tab, although it is currently not enforced
-        within this module.  It is used by the UI to determine which page is active.
+            tab_id: Intended to be a unique id for this tab, although it is currently not enforced
+            within this module.  It is used by the UI to determine which page is active.
 
-        'link_func' is a function that computes the link for the tab,
-        given the course and a reverse-url function as input parameters
+            link_func: A function that computes the link for the tab,
+            given the course and a reverse-url function as input parameters
         """
 
         self.name = name
@@ -52,22 +53,24 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         This method is to be overridden by subclasses when applicable.  The base class implementation
         always returns True.
 
-        'course' is an xModule CourseDescriptor
+        Args:
+            course: An xModule CourseDescriptor
 
-        'settings' is the configuration settings, including values for:
-         WIKI_ENABLED
-         FEATURES['ENABLE_DISCUSSION_SERVICE']
-         FEATURES['ENABLE_STUDENT_NOTES']
-         FEATURES['ENABLE_TEXTBOOK']
+            settings: The configuration settings, including values for:
+             WIKI_ENABLED
+             FEATURES['ENABLE_DISCUSSION_SERVICE']
+             FEATURES['ENABLE_STUDENT_NOTES']
+             FEATURES['ENABLE_TEXTBOOK']
 
-        'is_user_authenticated' indicates whether the user is authenticated.  If the tab is of
-         type AuthenticatedCourseTab and this value is False, then can_display will return False.
+            is_user_authenticated: Indicates whether the user is authenticated.  If the tab is of
+             type AuthenticatedCourseTab and this value is False, then can_display will return False.
 
-        'is_user_staff' indicates whether the user has staff access to the course.  If the tab is of
-         type StaffTab and this value is False, then can_display will return False.
+            is_user_staff: Indicates whether the user has staff access to the course.  If the tab is of
+             type StaffTab and this value is False, then can_display will return False.
 
-        Returns a boolean value to indicate whether this instance of the tab should be displayed to a
-        given user for the given course.
+        Returns:
+            A boolean value to indicate whether this instance of the tab should be displayed to a
+            given user for the given course.
         """
         return True
 
@@ -93,7 +96,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         elif key == 'tab_id':
             return self.tab_id
         else:
-            raise KeyError()
+            raise KeyError('Key {0} not present in tab {1}'.format(key, self.to_json()))
 
     def __setitem__(self, key, value):
         """
@@ -107,7 +110,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         elif key == 'tab_id':
             self.tab_id = value
         else:
-            raise KeyError()
+            raise KeyError('Key {0} cannot be set in tab {1}'.format(key, self.to_json()))
 
     # pylint: disable=incomplete-protocol
     # Note: pylint complains that we do not implement __delitem__ and __len__, although we implement __setitem__
@@ -129,7 +132,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         was implemented).
         """
 
-        if type(self) != type(other) and not self.validate(other, raise_error=False):
+        if type(other) is dict and not self.validate(other, raise_error=False):
             # 'other' is a dict-type tab and did not validate
             return False
 
@@ -137,7 +140,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         name_is_eq = (other.get('name') is None or self.name == other['name'])
 
         # only compare the persisted/serialized members: 'type' and 'name'
-        return self.type == other['type'] and name_is_eq
+        return self.type == other.get('type') and name_is_eq
 
     def __ne__(self, other):
         """
@@ -151,10 +154,10 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
         Validates the given dict-type tab object to ensure it contains the expected keys.
         This method should be overridden by subclasses that require certain keys to be persisted in the tab.
         """
-        return True
+        return key_checker(['type'])(tab, raise_error)
 
     @classmethod
-    def factory(cls, tab):
+    def from_dict(cls, tab):
         """
         Factory method that creates a CourseTab object for the given dict-type tab.  The subclass that is
         instantiated is determined by the value of the 'type' key in the given dict-type tab.  The given
@@ -180,7 +183,7 @@ class CourseTab(object):  # pylint: disable=incomplete-protocol
             'instructor': InstructorTab,  # not persisted
         }
 
-        tab_type = tab['type']
+        tab_type = tab.get('type')
         if tab_type not in sub_class_types:
             raise InvalidTabsException(
                 'Unknown tab type {0}. Known types: {1}'.format(tab_type, sub_class_types)
@@ -215,8 +218,8 @@ class CoursewareTab(CourseTab):
     type = 'courseware'
 
     def __init__(self, tab=None):  # pylint: disable=unused-argument
-        # Translators: 'Courseware' refers to the tab in the courseware that leads to the content of a course
         super(CoursewareTab, self).__init__(
+            # Translators: 'Courseware' refers to the tab in the courseware that leads to the content of a course
             name=_('Courseware'),  # support fixed name for the courseware tab
             tab_id=self.type,
             link_func=link_reverse_func(self.type),
@@ -231,8 +234,8 @@ class CourseInfoTab(CourseTab):
     type = 'course_info'
 
     def __init__(self, tab=None):
-        # Translators: "Course Info" is the name of the course's information and updates page
         super(CourseInfoTab, self).__init__(
+            # Translators: "Course Info" is the name of the course's information and updates page
             name=tab['name'] if tab else _('Course Info'),
             tab_id='info',
             link_func=link_reverse_func('info'),
@@ -240,7 +243,7 @@ class CourseInfoTab(CourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return need_name(tab, raise_error)
+        return super(CourseInfoTab, cls).validate(tab, raise_error) and need_name(tab, raise_error)
 
 
 class ProgressTab(AuthenticatedCourseTab):
@@ -262,7 +265,7 @@ class ProgressTab(AuthenticatedCourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return need_name(tab, raise_error)
+        return super(ProgressTab, cls).validate(tab, raise_error) and need_name(tab, raise_error)
 
 
 class WikiTab(CourseTab):
@@ -287,7 +290,7 @@ class WikiTab(CourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return need_name(tab, raise_error)
+        return super(WikiTab, cls).validate(tab, raise_error) and need_name(tab, raise_error)
 
 
 class DiscussionTab(CourseTab):
@@ -298,8 +301,8 @@ class DiscussionTab(CourseTab):
     type = 'discussion'
 
     def __init__(self, tab=None):
-        # Translators: "Discussion" is the title of the course forum page
         super(DiscussionTab, self).__init__(
+            # Translators: "Discussion" is the title of the course forum page
             name=tab['name'] if tab else _('Discussion'),
             tab_id=self.type,
             link_func=link_reverse_func('django_comment_client.forum.views.forum_form_discussion'),
@@ -310,7 +313,7 @@ class DiscussionTab(CourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return need_name(tab, raise_error)
+        return super(DiscussionTab, cls).validate(tab, raise_error) and need_name(tab, raise_error)
 
 
 class LinkTab(CourseTab):
@@ -345,11 +348,11 @@ class LinkTab(CourseTab):
     def __eq__(self, other):
         if not super(LinkTab, self).__eq__(other):
             return False
-        return self.link_value == other['link']
+        return self.link_value == other.get('link')
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return key_checker(['link'])(tab, raise_error)
+        return super(LinkTab, cls).validate(tab, raise_error) and key_checker(['link'])(tab, raise_error)
 
 
 class ExternalDiscussionTab(LinkTab):
@@ -360,8 +363,8 @@ class ExternalDiscussionTab(LinkTab):
     type = 'external_discussion'
 
     def __init__(self, tab=None, link_value=None):
-        # Translators: 'Discussion' refers to the tab in the courseware that leads to the discussion forums
         super(ExternalDiscussionTab, self).__init__(
+            # Translators: 'Discussion' refers to the tab in the courseware that leads to the discussion forums
             name=_('Discussion'),
             tab_id='discussion',
             link_value=tab['link'] if tab else link_value,
@@ -391,7 +394,7 @@ class StaticTab(CourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return key_checker(['name', 'url_slug'])(tab, raise_error)
+        return super(StaticTab, cls).validate(tab, raise_error) and key_checker(['name', 'url_slug'])(tab, raise_error)
 
     def __init__(self, tab=None, name=None, url_slug=None):
         self.url_slug = tab['url_slug'] if tab else url_slug
@@ -420,7 +423,7 @@ class StaticTab(CourseTab):
     def __eq__(self, other):
         if not super(StaticTab, self).__eq__(other):
             return False
-        return self.url_slug == other['url_slug']
+        return self.url_slug == other.get('url_slug')
 
 
 class SingleTextbookTab(CourseTab):
@@ -512,9 +515,9 @@ class StaffGradingTab(StaffTab, GradingTab):
     type = 'staff_grading'
 
     def __init__(self, tab=None):  # pylint: disable=unused-argument
-        # Translators: "Staff grading" appears on a tab that allows
-        # staff to view open-ended problems that require staff grading
         super(StaffGradingTab, self).__init__(
+            # Translators: "Staff grading" appears on a tab that allows
+            # staff to view open-ended problems that require staff grading
             name=_("Staff grading"),
             tab_id=self.type,
             link_func=link_reverse_func(self.type),
@@ -528,9 +531,9 @@ class PeerGradingTab(AuthenticatedCourseTab, GradingTab):
     type = 'peer_grading'
 
     def __init__(self, tab=None):  # pylint: disable=unused-argument
-        # Translators: "Peer grading" appears on a tab that allows
-        # students to view open-ended problems that require grading
         super(PeerGradingTab, self).__init__(
+            # Translators: "Peer grading" appears on a tab that allows
+            # students to view open-ended problems that require grading
             name=_("Peer grading"),
             tab_id=self.type,
             link_func=link_reverse_func(self.type),
@@ -544,9 +547,9 @@ class OpenEndedGradingTab(AuthenticatedCourseTab, GradingTab):
     type = 'open_ended'
 
     def __init__(self, tab=None):  # pylint: disable=unused-argument
-        # Translators: "Open Ended Panel" appears on a tab that, when clicked, opens up a panel that
-        # displays information about open-ended problems that a user has submitted or needs to grade
         super(OpenEndedGradingTab, self).__init__(
+            # Translators: "Open Ended Panel" appears on a tab that, when clicked, opens up a panel that
+            # displays information about open-ended problems that a user has submitted or needs to grade
             name=_("Open Ended Panel"),
             tab_id=self.type,
             link_func=link_reverse_func('open_ended_notifications'),
@@ -589,7 +592,7 @@ class NotesTab(AuthenticatedCourseTab):
 
     @classmethod
     def validate(cls, tab, raise_error=True):
-        return need_name(tab, raise_error)
+        return super(NotesTab, cls).validate(tab, raise_error) and need_name(tab, raise_error)
 
 
 class InstructorTab(StaffTab):
@@ -599,9 +602,9 @@ class InstructorTab(StaffTab):
     type = 'instructor'
 
     def __init__(self, tab=None):  # pylint: disable=unused-argument
-        # Translators: 'Instructor' appears on the tab that leads to the instructor dashboard, which is
-        # a portal where an instructor can get data and perform various actions on their course
         super(InstructorTab, self).__init__(
+            # Translators: 'Instructor' appears on the tab that leads to the instructor dashboard, which is
+            # a portal where an instructor can get data and perform various actions on their course
             name=_('Instructor'),
             tab_id=self.type,
             link_func=link_reverse_func('instructor_dashboard'),
@@ -709,11 +712,11 @@ class CourseTabList(List):
         if len(tabs) < 2:
             raise InvalidTabsException("Expected at least two tabs.  tabs: '{0}'".format(tabs))
 
-        if tabs[0]['type'] != CoursewareTab.type:
+        if tabs[0].get('type') != CoursewareTab.type:
             raise InvalidTabsException(
                 "Expected first tab to have type 'courseware'.  tabs: '{0}'".format(tabs))
 
-        if tabs[1]['type'] != CourseInfoTab.type:
+        if tabs[1].get('type') != CourseInfoTab.type:
             raise InvalidTabsException(
                 "Expected second tab to have type 'course_info'.  tabs: '{0}'".format(tabs))
 
@@ -733,11 +736,12 @@ class CourseTabList(List):
         """
         Check that the number of times that the given 'tab_type' appears in 'tabs' is less than or equal to 'max_num'.
         """
-        count = sum(1 for tab in tabs if tab['type'] == tab_type)
+        count = sum(1 for tab in tabs if tab.get('type') == tab_type)
         if count > max_num:
             raise InvalidTabsException(
                 "Tab of type '{0}' appears {1} time(s). Expected maximum of {2} time(s).".format(
-                tab_type, count, max_num))
+                tab_type, count, max_num
+            ))
 
     def to_json(self, values):
         """
@@ -759,10 +763,7 @@ class CourseTabList(List):
         Overrides the from_json method to de-serialize all the CourseTab objects.
         """
         self._validate_tabs(values)
-        tabs = []
-        for tab in values:
-            tabs.append(CourseTab.factory(tab))
-        return tabs
+        return [CourseTab.from_dict(tab) for tab in values]
 
 
 #### Link Functions
