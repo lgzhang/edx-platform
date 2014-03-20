@@ -468,7 +468,7 @@ class VideoModule(VideoFields, XModule):
                     if request.GET.get('format'):
                         transcript = Transcript.convert(transcript, 'sjson', request.GET.get('format'))
                     response = Response(transcript, headerlist=[('Content-Language', language)])
-                    response.content_type = Transcipt.mime_types[transcript_format]
+                    response.content_type = Transcript.mime_types[transcript_format]
 
         elif dispatch == 'download':
             try:
