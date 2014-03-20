@@ -355,7 +355,8 @@ def check_text_in_the_captions(_step, text):
 
 @step('I select language with code "([^"]*)"$')
 def select_language(_step, code):
-    _open_menu("language")
+    world.css_find(VIDEO_BUTTONS["CC"]).mouse_over()
+
     selector = VIDEO_MENUS["language"] + ' li[data-lang-code={code}]'.format(
         code=code
     )
