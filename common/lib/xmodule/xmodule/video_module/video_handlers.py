@@ -22,6 +22,9 @@ from .transcripts_utils import (
     save_to_store,
 )
 
+log = logging.getLogger(__name__)
+
+
 class VideoStudentViewHandlers(object):
     """
     Handlers for video module instance.
