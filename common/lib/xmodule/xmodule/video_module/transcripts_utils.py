@@ -471,7 +471,7 @@ class Transcript(object):
     mime_types = {
         'srt': 'application/x-subrip',
         'txt':  'text/plain',
-        'sjson:' 'application/json'
+        'sjson:' 'application/json',
     }
 
     @staticmethod
